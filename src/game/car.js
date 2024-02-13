@@ -1,7 +1,7 @@
 /* global Image */
 
 class Car {
-  constructor (opts) {
+  constructor(opts) {
     this.name = opts.name;
 
     this.height = opts.height;
@@ -27,17 +27,25 @@ class Car {
     this.steering = 0;
   }
 
-  respondToEvents (game, keysDown = {}) {
+  respondToEvents(game, keysDown = {}) {
     // steer left?
 
     if (keysDown.left) {
-      this.angle -= this.steering;
+      if (this.power > 0) {
+        this.angle -= this.steering;
+      } else {
+        this.angle += this.steering;
+      }
     }
 
     // steer right?
 
     if (keysDown.right) {
-      this.angle += this.steering;
+      if (this.power > 0) {
+        this.angle += this.steering;
+      } else {
+        this.angle -= this.steering;
+      }
     }
 
     // accelerate?
@@ -50,14 +58,17 @@ class Car {
 
     // decelerate?
 
-    if ((keysDown.accelerate && keysDown.brake) || (!keysDown.accelerate && !keysDown.brake)) {
+    if (
+      (keysDown.accelerate && keysDown.brake) ||
+      (!keysDown.accelerate && !keysDown.brake)
+    ) {
       this.power *= game.friction;
     }
 
     // brake/reverse?
 
     if (keysDown.brake && !keysDown.accelerate) {
-      if (this.power > (this.maxPower * -1)) {
+      if (this.power > this.maxPower * -1) {
         this.power -= this.braking;
       }
     }
@@ -79,13 +90,22 @@ class Car {
     // decrease angle if i'm sliding left
 
     if (keysDown.handbrake && keysDown.left) {
-      this.angle -= this.steering * 0.5;
+      if (this.power > 0) {
+        this.angle -= this.steering * 0.5;
+      } else {
+        this.angle += this.steering * 0.5;
+      }
     }
 
     // increase angle if i'm sliding right
 
     if (keysDown.handbrake && keysDown.right) {
-      this.angle += this.steering * 0.5;
+      if (this.power > 0) {
+        this.angle += this.steering * 0.5;
+      } else {
+        this.angle -= this.steering * 0.5;
+      }
+    }
     }
   }
 
