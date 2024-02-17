@@ -4,8 +4,8 @@
   "description": "A Micro Machines port port that runs on Hedera Consensus Service",
   "main": "index.js",
   "scripts": {
-    "bundle": "browserify src/ -o dist/js/micro-machines.js",
-    "watch": "watchify src/ -o dist/js/micro-machines.js"
+    "bundle": "browserify src/ | terser --compress --mangle >  dist/js/micro-machines.js",
+    "watch": "watchify src/ -o dist/js/micro-machines.js -v"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,7 @@
     "eslint-config-standard": "^11.0.0",
     "eslint-plugin-standard": "^3.1.0",
     "semistandard": "^12.0.1",
-    "watchify": "^3.11.0"
+    "watchify": "^3.11.0",
+    "terser": "^5.27.1"
   }
 }

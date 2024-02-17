@@ -5,6 +5,7 @@ const Track = require("./track");
 const PlayerCar = require("./player-car");
 const AICar = require("./ai-car");
 const Viewport = require("../lib/viewport");
+const Hud = require("./hud");
 
 class Game {
   constructor() {
@@ -154,9 +155,14 @@ class Game {
 
     const track = new Track(tracks.sand);
 
+    const hud = new Hud(tracks.sand);
+
     this.objects.push(track);
+    this.objects.push(hud);
 
     this.track = track;
+    this.hud = hud;
+    this.hud.startLapTimer();
 
     this.objects.push(
       new PlayerCar(
@@ -168,16 +174,16 @@ class Game {
       )
     );
 
-    this.objects.push(
-      new AICar(
-        Object.assign({}, cars.greenSport, {
-          x: track.startPositions[1].x,
-          y: track.startPositions[1].y,
-          angle: track.startAngle,
-          recordedPositions: track.recordedPositions[0],
-        })
-      )
-    );
+    // this.objects.push(
+    //   new AICar(
+    //     Object.assign({}, cars.greenSport, {
+    //       x: track.startPositions[1].x,
+    //       y: track.startPositions[1].y,
+    //       angle: track.startAngle,
+    //       recordedPositions: track.recordedPositions[0],
+    //     })
+    //   )
+    // );
 
     // this.objects.push(
     //   new AICar(
@@ -207,6 +213,11 @@ class Game {
     this.timer = setInterval(() => {
       this.tick();
     }, this.tickInterval);
+  }
+
+  onWaypointTriggered(waypointIndex) {
+    console.log("Game Waypoint triggered");
+    this.hud.onWaypointTriggered(waypointIndex);
   }
 }
 

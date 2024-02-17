@@ -11,6 +11,7 @@ class Track {
     this.startAngle = opts.startAngle;
     this.recordedPositions = opts.recordedPositions;
     this.obstacles = opts.obstacles;
+    this.waypoints = opts.waypoints;
 
     // Define the boundary of the entire quadtree
     const boundary = {
@@ -19,8 +20,6 @@ class Track {
       width: opts.width,
       height: opts.height,
     };
-
-    console.log("boundary", boundary);
 
     // Create the quadtree with a boundary and capacity
     const qt = new Quadtree(boundary, 4);
@@ -41,6 +40,7 @@ class Track {
 
   draw(game) {
     game.canvas.context.save();
+
     game.canvas.context.drawImage(this.img, game.viewport.x, game.viewport.y);
 
     // draw obstacles
@@ -71,6 +71,19 @@ class Track {
     //     obstacle.height
     //   );
     // });
+
+    // Draw the waypoints
+    game.canvas.context.fillStyle = "rgba(0, 255, 0, 0.8)";
+    game.canvas.context.strokeStyle = "rgba(0, 255, 0, 0.8)";
+    game.canvas.context.lineWidth = 2;
+    this.waypoints.forEach((waypoint) => {
+      game.canvas.context.fillRect(
+        waypoint.x + game.viewport.x,
+        waypoint.y + game.viewport.y,
+        waypoint.width,
+        waypoint.height
+      );
+    });
 
     game.canvas.context.restore();
   }

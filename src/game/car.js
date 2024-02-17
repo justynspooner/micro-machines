@@ -107,6 +107,9 @@ class Car {
       }
     }
 
+    // Round the angle to 360 degrees
+    this.angle = (this.angle + 360) % 360;
+
     // Check for collision and deflect if necessary
 
     if (this.checkCollision(game)) {
@@ -123,6 +126,37 @@ class Car {
         this.power = 0;
       }
     }
+
+    const waypointPassed = this.checkWaypoint(game);
+    if (waypointPassed !== -1) {
+      game.onWaypointTriggered(waypointPassed);
+    }
+  }
+
+  checkWaypoint(game) {
+    const carProjectedX = (this.x - game.viewport.width / 2) * -1;
+    const carProjectedY = (this.y - game.viewport.height / 2) * -1;
+
+    for (let i = 0; i < game.track.waypoints.length; i++) {
+      const waypoint = game.track.waypoints[i];
+
+      if (
+        carProjectedX < waypoint.x + waypoint.width &&
+        carProjectedX + this.width > waypoint.x &&
+        carProjectedY < waypoint.y + waypoint.height &&
+        carProjectedY + this.height > waypoint.y
+      ) {
+        // Check the angle of the car to see if it's facing the right way to the trigger
+        const waypointAngle = waypoint.angle;
+        const carAngle = this.angle;
+
+        // Make sure we're going through the right way
+        if (Math.abs(waypointAngle - carAngle) < 90) {
+          return i;
+        }
+      }
+    }
+    return -1;
   }
 
   checkCollision(game) {
