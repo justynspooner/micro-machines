@@ -1,13 +1,13 @@
-const tracks = require('./tracks');
-const cars = require('./cars');
-const Canvas = require('../lib/canvas');
-const Track = require('./track');
-const PlayerCar = require('./player-car');
-const AICar = require('./ai-car');
-const Viewport = require('../lib/viewport');
+const tracks = require("./tracks");
+const cars = require("./cars");
+const Canvas = require("../lib/canvas");
+const Track = require("./track");
+const PlayerCar = require("./player-car");
+const AICar = require("./ai-car");
+const Viewport = require("../lib/viewport");
 
 class Game {
-  constructor () {
+  constructor() {
     this.tickInterval = 60;
     this.cellWidth = 10;
     this.cellHeight = 10;
@@ -15,6 +15,7 @@ class Game {
     this.timer = null;
     this.canvas = null;
     this.viewport = null;
+
     this.objects = [];
 
     this.keys = {
@@ -22,7 +23,7 @@ class Game {
       right: 68,
       accelerate: 87,
       brake: 83,
-      handbrake: 32
+      handbrake: 32,
     };
 
     this.keysDown = {
@@ -30,17 +31,23 @@ class Game {
       right: false,
       accelerate: false,
       brake: false,
-      handbrake: false
+      handbrake: false,
     };
 
     this.friction = 0.82;
   }
 
-  bindEvents () {
+  bindEvents() {
     // keydown events
 
-    document.addEventListener('keydown', (e) => {
-      if (e.keyCode === this.keys.accelerate || e.keyCode === this.keys.brake || e.keyCode === this.keys.left || e.keyCode === this.keys.right || e.keyCode === this.keys.handbrake) {
+    document.addEventListener("keydown", (e) => {
+      if (
+        e.keyCode === this.keys.accelerate ||
+        e.keyCode === this.keys.brake ||
+        e.keyCode === this.keys.left ||
+        e.keyCode === this.keys.right ||
+        e.keyCode === this.keys.handbrake
+      ) {
         e.preventDefault();
       }
 
@@ -77,8 +84,14 @@ class Game {
 
     // keyup events
 
-    document.addEventListener('keyup', (e) => {
-      if (e.keyCode === this.keys.left || e.keyCode === this.keys.right || e.keyCode === this.keys.accelerate || e.keyCode === this.keys.brake || e.keyCode === this.keys.handbrake) {
+    document.addEventListener("keyup", (e) => {
+      if (
+        e.keyCode === this.keys.left ||
+        e.keyCode === this.keys.right ||
+        e.keyCode === this.keys.accelerate ||
+        e.keyCode === this.keys.brake ||
+        e.keyCode === this.keys.handbrake
+      ) {
         e.preventDefault();
       }
 
@@ -114,24 +127,28 @@ class Game {
     });
   }
 
-  tick () {
+  tick() {
     // clear canvas
 
     this.canvas.clear();
 
     // draw objects
 
-    this.objects.forEach(obj => obj.draw(this));
+    this.objects.forEach((obj) => obj.draw(this));
+
+    // draw quadtree
+
+    this.track.quadtree.draw(this);
 
     // draw viewport
 
     this.viewport.draw(this);
   }
 
-  start () {
+  start() {
     // create canvas object
 
-    this.canvas = new Canvas(document.getElementById('canvas'));
+    this.canvas = new Canvas(document.getElementById("canvas"));
 
     // add objects
 
@@ -139,25 +156,46 @@ class Game {
 
     this.objects.push(track);
 
-    this.objects.push(new PlayerCar(Object.assign({}, cars.yellowSport, {
-      x: track.startPositions[0].x,
-      y: track.startPositions[0].y,
-      angle: track.startAngle
-    })));
+    this.track = track;
 
-    this.objects.push(new AICar(Object.assign({}, cars.greenSport, {
-      x: track.startPositions[1].x,
-      y: track.startPositions[1].y,
-      angle: track.startAngle,
-      recordedPositions: track.recordedPositions[0]
-    })));
+    this.objects.push(
+      new PlayerCar(
+        Object.assign({}, cars.rocket, {
+          x: track.startPositions[0].x,
+          y: track.startPositions[0].y,
+          angle: track.startAngle,
+        })
+      )
+    );
+
+    this.objects.push(
+      new AICar(
+        Object.assign({}, cars.greenSport, {
+          x: track.startPositions[1].x,
+          y: track.startPositions[1].y,
+          angle: track.startAngle,
+          recordedPositions: track.recordedPositions[0],
+        })
+      )
+    );
+
+    // this.objects.push(
+    //   new AICar(
+    //     Object.assign({}, cars.greenSport, {
+    //       x: track.startPositions[2].x,
+    //       y: track.startPositions[2].y,
+    //       angle: track.startAngle,
+    //       recordedPositions: track.recordedPositions[0],
+    //     })
+    //   )
+    // );
 
     // create viewport object
 
     this.viewport = new Viewport({
       height: this.canvas.height,
       width: this.canvas.width,
-      margin: 50
+      margin: 0,
     });
 
     // bind events

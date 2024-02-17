@@ -1,7 +1,7 @@
-const Car = require('./car');
+const Car = require("./car");
 
 class PlayerCar extends Car {
-  draw (game) {
+  draw(game) {
     super.respondToEvents(game, game.keysDown);
     super.calculate(game);
 
@@ -12,7 +12,11 @@ class PlayerCar extends Car {
 
     // draw
 
-    super.draw(game, game.viewport.centre.x, game.viewport.centre.y);
+    super.draw(
+      game,
+      game.viewport.centre.x + this.width / 2,
+      game.viewport.centre.y + this.height / 2
+    );
   }
 }
 
