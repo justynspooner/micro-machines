@@ -1,7 +1,7 @@
 {
-  "name": "micro-machines",
+  "name": "micro-machines-hcs",
   "version": "1.0.0",
-  "description": "HTML5 Micro Machines --",
+  "description": "A Micro Machines port port that runs on Hedera Consensus Service",
   "main": "index.js",
   "scripts": {
     "bundle": "browserify src/ -o dist/js/micro-machines.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kslat3r/micro-machines.git"
+    "url": "git+https://github.com/justynspooner/micro-machines.git"
   },
-  "author": "Ed Kelly",
+  "author": "Ed Kelly & Justyn Spooner",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kslat3r/micro-machines/issues"
+    "url": "https://github.com/justynspooner/micro-machines/issues"
   },
-  "homepage": "https://github.com/kslat3r/micro-machines#readme",
+  "homepage": "https://github.com/justynspooner/micro-machines#readme",
   "devDependencies": {
     "browserify": "^16.2.2",
     "eslint-config-semistandard": "^12.0.1",
