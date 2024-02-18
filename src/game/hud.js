@@ -53,18 +53,17 @@ class Hud {
         this.currentWaypointIndex === this.waypoints.length - 1
       )
     ) {
-      console.log("Game Waypoint ignored: ", waypointIndex);
       return;
     }
 
     this.currentWaypointIndex = waypointIndex;
 
     if (waypointIndex === 0) {
-      console.log("Game Lap triggered");
+      console.log("Completed full lap ", this.currentLap);
       this.onLapTriggered();
     }
 
-    console.log("Game Waypoint triggered: ", waypointIndex);
+    console.log("Triggered waypoint: ", waypointIndex);
   }
 
   onLapTriggered() {
@@ -81,7 +80,7 @@ class Hud {
         if (this.finalRaceTime) {
           return;
         }
-        console.log("FINAL LAP FINISHED");
+        console.log("Completed final lap!");
         this.raceFinishTimestamp = Date.now();
         this.finalRaceTime = this.raceFinishTimestamp - this.raceStartTimestamp;
         console.log(
