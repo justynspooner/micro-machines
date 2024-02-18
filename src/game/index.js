@@ -1,3 +1,5 @@
+require("../lib/roundRect");
+
 const tracks = require("./tracks");
 const cars = require("./cars");
 const Canvas = require("../lib/canvas");
