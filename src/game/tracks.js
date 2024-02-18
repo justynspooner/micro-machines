@@ -34,6 +34,13 @@ module.exports = {
         height: 20,
         angle: 90,
       },
+      {
+        x: 800,
+        y: 1500,
+        width: 20,
+        height: 200,
+        angle: 180,
+      },
     ],
 
     startPositions: [
