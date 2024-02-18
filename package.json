@@ -1,11 +1,11 @@
 {
-  "name": "micro-machines-hcs",
+  "name": "micro-rocket-team-racing",
   "version": "1.0.0",
-  "description": "A Micro Machines port port that runs on Hedera Consensus Service",
+  "description": "Micro Rocket Team Racing (mRTR) is a zero dependency, lightweight, and fast top down racing game written in JavaScript designed for deploying to the Hedera Consensus Service as part of demoing the HCS-1 protocol standard.",
   "main": "index.js",
   "scripts": {
-    "bundle": "browserify src/ | terser --compress --mangle >  dist/js/micro-machines.js",
-    "watch": "watchify src/ -o dist/js/micro-machines.js -v"
+    "bundle": "browserify src/ | terser --compress --mangle >  dist/js/mrtr.js",
+    "watch": "watchify src/ -o dist/js/mrtr.js -v"
   },
   "repository": {
     "type": "git",
