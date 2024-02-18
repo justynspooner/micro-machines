@@ -156,25 +156,17 @@ class Quadtree {
 
   draw(game) {
     // save state
-
-    game.canvas.context.save();
-
-    // draw all quadtree nodes
-
-    game.canvas.context.strokeStyle = "rgba(255, 0, 0, 0.8)";
-    game.canvas.context.lineWidth = 5;
-
-    this.drawNode(game, this);
-
-    // draw all objects
-
-    game.canvas.context.fillStyle = "rgba(255, 0, 0, 0.5)";
-    game.canvas.context.strokeStyle = "rgba(255, 0, 0, 0.5)";
-    game.canvas.context.lineWidth = 2;
-
-    this.drawObjects(game, this);
-
-    game.canvas.context.restore();
+    // game.canvas.context.save();
+    // // draw all quadtree nodes
+    // game.canvas.context.strokeStyle = "rgba(255, 0, 0, 0.8)";
+    // game.canvas.context.lineWidth = 5;
+    // this.drawNode(game, this);
+    // // draw all objects
+    // game.canvas.context.fillStyle = "rgba(255, 0, 0, 0.5)";
+    // game.canvas.context.strokeStyle = "rgba(255, 0, 0, 0.5)";
+    // game.canvas.context.lineWidth = 2;
+    // this.drawObjects(game, this);
+    // game.canvas.context.restore();
   }
 }
 

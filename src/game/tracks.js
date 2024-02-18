@@ -13,6 +13,20 @@ module.exports = {
         height: 20,
         angle: 270,
       },
+      // {
+      //   x: 450,
+      //   y: 655,
+      //   width: 200,
+      //   height: 20,
+      //   angle: 90,
+      // },
+      {
+        x: 750,
+        y: 55,
+        width: 20,
+        height: 200,
+        angle: 0,
+      },
       {
         x: 1500,
         y: 555,

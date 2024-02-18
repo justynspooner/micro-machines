@@ -322,16 +322,35 @@ class Hud {
   constructor(opts) {
     this.totalLaps = opts.laps;
     this.waypoints = opts.waypoints;
+    this.reset();
+  }
+
+  respondToEvents(game, keysDown = {}) {
+    // steer left?
+
+    if (keysDown.resetGame) {
+      if (this.power > 0) {
+        this.angle -= this.steering;
+      } else {
+        this.angle += this.steering;
+      }
+    }
+  }
+
+  reset() {
     this.currentLap = 0;
     this.raceStartTimestamp = null;
     this.lapStartTimestamp = null;
     this.raceFinishTimestamp = null;
+    this.finalRaceTime = null;
+    this.finalRaceTimeFormatted = "0:00.000";
     this.lapTimes = [];
     this.formattedLapTimes = [];
-    this.currentWaypoint = 0;
+    this.currentWaypointIndex = 0;
   }
 
   startLapTimer() {
+    console.log("Game Lap timer started");
     this.raceStartTimestamp = Date.now();
     this.lapStartTimestamp = this.raceStartTimestamp;
   }
@@ -339,17 +358,24 @@ class Hud {
   onWaypointTriggered(waypointIndex) {
     // If we're not on the next waypoint or on the last waypoint and the next waypoint is not the first, then ignore
 
-    if (
-      waypointIndex !== this.currentWaypoint + 1 &&
-      !(
-        waypointIndex === 0 &&
-        this.currentWaypoint === this.waypoints.length - 1
-      )
-    ) {
+    // If we're on the first lap, then start the lap timer
+    if (this.currentLap === 0 && !this.lapStartTimestamp) {
+      this.startLapTimer();
       return;
     }
 
-    this.currentWaypoint = waypointIndex;
+    if (
+      waypointIndex !== this.currentWaypointIndex + 1 &&
+      !(
+        waypointIndex === 0 &&
+        this.currentWaypointIndex === this.waypoints.length - 1
+      )
+    ) {
+      console.log("Game Waypoint ignored: ", waypointIndex);
+      return;
+    }
+
+    this.currentWaypointIndex = waypointIndex;
 
     if (waypointIndex === 0) {
       console.log("Game Lap triggered");
@@ -361,23 +387,28 @@ class Hud {
 
   onLapTriggered() {
     if (this.lapStartTimestamp) {
-      const lapTimeInSeconds = Date.now() - this.lapStartTimestamp / 1000;
-      this.lapTimes.push(lapTimeInSeconds);
+      const lapTimeInMilliseconds = Date.now() - this.lapStartTimestamp;
+      this.lapTimes.push(lapTimeInMilliseconds);
 
-      // Format the time to 00:00.000
-      const minutes = Math.floor(lapTimeInSeconds / 60);
-      const seconds = Math.floor(lapTimeInSeconds % 60);
-      const milliseconds = Math.floor((lapTimeInSeconds % 1) * 1000);
-      const formattedTime = `${minutes}:${String(seconds).padStart(
-        2,
-        "0"
-      )}.${String(milliseconds).padStart(3, "0")}`;
+      const formattedTime = this.getFormattedTime(lapTimeInMilliseconds);
 
       this.formattedLapTimes.push(formattedTime);
       this.currentLap += 1;
 
       if (this.currentLap === this.totalLaps) {
+        if (this.finalRaceTime) {
+          return;
+        }
+        console.log("FINAL LAP FINISHED");
         this.raceFinishTimestamp = Date.now();
+        this.finalRaceTime = this.raceFinishTimestamp - this.raceStartTimestamp;
+        console.log(
+          "Final Race Time: ",
+          (this.finalRaceTimeFormatted = this.getFormattedTime(
+            this.finalRaceTime
+          ))
+        );
+
         this.raceStartTimestamp = null;
         this.lapStartTimestamp = null;
         lapEventTarget.dispatchEvent(new Event("raceFinished"));
@@ -387,10 +418,9 @@ class Hud {
     }
   }
 
-  getRaceTotalTime() {
-    const timeToUse = this.raceStartTimestamp || this.raceFinishTimestamp;
-    if (timeToUse) {
-      const totalTimeInSeconds = (Date.now() - timeToUse) / 1000;
+  getFormattedTime(dateTime) {
+    if (dateTime) {
+      const totalTimeInSeconds = dateTime / 1000;
 
       // Format the time to 00:00.000
       const minutes = Math.floor(totalTimeInSeconds / 60);
@@ -400,37 +430,114 @@ class Hud {
         milliseconds
       ).padStart(3, "0")}`;
     }
-    return "00:00.000";
+    return "0:00.000";
   }
 
   draw(game) {
     game.canvas.context.save();
 
     // Draw the lap counter in the top left
-    game.canvas.context.fillStyle = "rgba(0,0,0, 0.8)";
-    game.canvas.context.font = "20px Arial";
+    game.canvas.context.fillStyle = "rgba(0,0,0, 1)";
+    game.canvas.context.font = "italic bold 60px Arial";
     game.canvas.context.fillText(
-      `Lap: ${this.currentLap + 1}/${this.totalLaps}`,
+      `${Math.min(this.currentLap + 1, this.totalLaps)}/${this.totalLaps}`,
       10,
-      20
+      60
     );
 
     // Draw the lap times one after the other aligned top right of the viewport
 
+    // Add a white transparent background with corner radius to the following text
+    if (this.formattedLapTimes.length > 0) {
+      game.canvas.context.fillStyle = "rgba(255,255,255, 0.8)";
+      game.canvas.context.beginPath();
+      game.canvas.context.roundRect(
+        game.canvas.width - 130,
+        10,
+        120,
+        10 + 20 * this.formattedLapTimes.length,
+        10
+      );
+      game.canvas.context.fill();
+    }
+
+    game.canvas.context.fillStyle = "rgb(0,0,0)";
     game.canvas.context.textAlign = "right";
-    game.canvas.context.fillText(
-      `Lap times: ${this.lapTimes.join("\n")}`,
-      game.canvas.width - 10,
-      20
-    );
+    game.canvas.context.font = "italic 20px Arial";
+    for (let i = 0; i < this.formattedLapTimes.length; i++) {
+      game.canvas.context.fillText(
+        `${i + 1}: ${this.formattedLapTimes[i]}`,
+        game.canvas.width - 20,
+        32 + 20 * i
+      );
+    }
 
     // Draw the current total time in the center top of the viewport
     game.canvas.context.textAlign = "center";
-    game.canvas.context.fillText(
-      `Total time: ${this.getRaceTotalTime()}`,
-      game.canvas.width / 2,
-      20
-    );
+
+    if (this.finalRaceTime) {
+      game.canvas.context.fillStyle = "rgba(255,255,255, 0.8)";
+      game.canvas.context.beginPath();
+      game.canvas.context.roundRect(
+        game.canvas.width / 2 - 150,
+        game.canvas.height / 2 - 190,
+        300,
+        160,
+        10
+      );
+      game.canvas.context.fill();
+
+      game.canvas.context.fillStyle = "rgba(0,0,0, 1)";
+      game.canvas.context.font = "italic 50px Arial";
+      game.canvas.context.fillText(
+        "Total Time",
+        game.canvas.width / 2,
+        game.canvas.height / 2 - 120
+      );
+
+      game.canvas.context.font = "italic bold 60px Arial";
+      game.canvas.context.fillText(
+        this.finalRaceTimeFormatted,
+        game.canvas.width / 2,
+        game.canvas.height / 2 - 60
+      );
+
+      game.canvas.context.fillStyle = "rgba(255,255,255, 0.8)";
+      game.canvas.context.beginPath();
+      game.canvas.context.roundRect(
+        40,
+        game.canvas.height - 140,
+        game.canvas.width - 80,
+        100,
+        10
+      );
+      game.canvas.context.fill();
+
+      game.canvas.context.fillStyle = "rgba(0,0,0, 1)";
+
+      game.canvas.context.font = "italic 30px Arial";
+      game.canvas.context.fillText(
+        "Press 'R' to Restart",
+        game.canvas.width / 2,
+        game.canvas.height - 100
+      );
+
+      // Press S to store time on leaderboard
+      game.canvas.context.fillText(
+        "Press 'I' to Inscribe your time",
+        game.canvas.width / 2,
+        game.canvas.height - 60
+      );
+    } else {
+      game.canvas.context.font = "30px Arial";
+      game.canvas.context.fillText(
+        this.getFormattedTime(
+          this.raceStartTimestamp ? Date.now() - this.raceStartTimestamp : 0
+        ),
+        game.canvas.width / 2,
+        30
+      );
+    }
 
     game.canvas.context.restore();
   }
@@ -465,6 +572,10 @@ class Game {
       accelerate: 87,
       brake: 83,
       handbrake: 32,
+      // 'r' key to reset game
+      resetGame: 82,
+      // 'i' key to inscribe data to HCS
+      inscribeData: 73,
     };
 
     this.keysDown = {
@@ -473,99 +584,133 @@ class Game {
       accelerate: false,
       brake: false,
       handbrake: false,
+      resetGame: false,
+      inscribeData: false,
     };
 
     this.friction = 0.82;
   }
 
+  onKeydownListener(e) {
+    if (
+      e.keyCode === this.keys.accelerate ||
+      e.keyCode === this.keys.brake ||
+      e.keyCode === this.keys.left ||
+      e.keyCode === this.keys.right ||
+      e.keyCode === this.keys.handbrake ||
+      e.keyCode === this.keys.resetGame ||
+      e.keyCode === this.keys.inscribeData
+    ) {
+      e.preventDefault();
+    }
+
+    // left
+
+    if (e.keyCode === this.keys.left) {
+      this.keysDown.left = true;
+    }
+
+    // right
+
+    if (e.keyCode === this.keys.right) {
+      this.keysDown.right = true;
+    }
+
+    // up
+
+    if (e.keyCode === this.keys.accelerate) {
+      this.keysDown.accelerate = true;
+    }
+
+    // down
+
+    if (e.keyCode === this.keys.brake) {
+      this.keysDown.brake = true;
+    }
+
+    // slide
+
+    if (e.keyCode === this.keys.handbrake) {
+      this.keysDown.handbrake = true;
+    }
+
+    // reset game
+
+    if (e.keyCode === this.keys.resetGame) {
+      this.keysDown.resetGame = true;
+    }
+
+    // inscribe data
+
+    if (e.keyCode === this.keys.inscribeData) {
+      this.keysDown.inscribeData = true;
+    }
+  }
+
+  onKeyupListener(e) {
+    if (
+      e.keyCode === this.keys.left ||
+      e.keyCode === this.keys.right ||
+      e.keyCode === this.keys.accelerate ||
+      e.keyCode === this.keys.brake ||
+      e.keyCode === this.keys.handbrake ||
+      e.keyCode === this.keys.resetGame ||
+      e.keyCode === this.keys.inscribeData
+    ) {
+      e.preventDefault();
+    }
+
+    // left
+
+    if (e.keyCode === this.keys.left) {
+      this.keysDown.left = false;
+    }
+
+    // right
+
+    if (e.keyCode === this.keys.right) {
+      this.keysDown.right = false;
+    }
+
+    // up
+
+    if (e.keyCode === this.keys.accelerate) {
+      this.keysDown.accelerate = false;
+    }
+
+    // down
+
+    if (e.keyCode === this.keys.brake) {
+      this.keysDown.brake = false;
+    }
+
+    // slide
+
+    if (e.keyCode === this.keys.handbrake) {
+      this.keysDown.handbrake = false;
+    }
+
+    // reset game
+
+    if (e.keyCode === this.keys.resetGame) {
+      this.keysDown.resetGame = false;
+    }
+
+    // inscribe data
+
+    if (e.keyCode === this.keys.inscribeData) {
+      this.keysDown.inscribeData = false;
+    }
+  }
+
   bindEvents() {
     // keydown events
 
-    document.addEventListener("keydown", (e) => {
-      if (
-        e.keyCode === this.keys.accelerate ||
-        e.keyCode === this.keys.brake ||
-        e.keyCode === this.keys.left ||
-        e.keyCode === this.keys.right ||
-        e.keyCode === this.keys.handbrake
-      ) {
-        e.preventDefault();
-      }
-
-      // left
-
-      if (e.keyCode === this.keys.left) {
-        this.keysDown.left = true;
-      }
-
-      // right
-
-      if (e.keyCode === this.keys.right) {
-        this.keysDown.right = true;
-      }
-
-      // up
-
-      if (e.keyCode === this.keys.accelerate) {
-        this.keysDown.accelerate = true;
-      }
-
-      // down
-
-      if (e.keyCode === this.keys.brake) {
-        this.keysDown.brake = true;
-      }
-
-      // slide
-
-      if (e.keyCode === this.keys.handbrake) {
-        this.keysDown.handbrake = true;
-      }
-    });
+    document.addEventListener("keydown", this.onKeydownListener.bind(this));
 
     // keyup events
 
-    document.addEventListener("keyup", (e) => {
-      if (
-        e.keyCode === this.keys.left ||
-        e.keyCode === this.keys.right ||
-        e.keyCode === this.keys.accelerate ||
-        e.keyCode === this.keys.brake ||
-        e.keyCode === this.keys.handbrake
-      ) {
-        e.preventDefault();
-      }
-
-      // left
-
-      if (e.keyCode === this.keys.left) {
-        this.keysDown.left = false;
-      }
-
-      // right
-
-      if (e.keyCode === this.keys.right) {
-        this.keysDown.right = false;
-      }
-
-      // up
-
-      if (e.keyCode === this.keys.accelerate) {
-        this.keysDown.accelerate = false;
-      }
-
-      // down
-
-      if (e.keyCode === this.keys.brake) {
-        this.keysDown.brake = false;
-      }
-
-      // slide
-
-      if (e.keyCode === this.keys.handbrake) {
-        this.keysDown.handbrake = false;
-      }
-    });
+    document.addEventListener("keyup", this.onKeyupListener.bind(this));
   }
 
   tick() {
@@ -584,6 +729,32 @@ class Game {
     // draw viewport
 
     this.viewport.draw(this);
+
+    // Check for game reset
+    if (this.keysDown.resetGame) {
+      this.reset();
+    }
+  }
+
+  reset() {
+    // Clear timer
+
+    clearInterval(this.timer);
+
+    // Unbind events
+
+    console.log("Game Reset");
+
+    document.removeEventListener("keydown", this.onKeydownListener);
+    document.removeEventListener("keyup", this.onKeyupListener);
+
+    // Clear objects
+
+    this.objects = [];
+
+    // Restart game
+
+    this.start();
   }
 
   start() {
@@ -593,43 +764,29 @@ class Game {
 
     // add objects
 
-    const track = new Track(tracks.sand);
+    this.track = new Track(tracks.sand);
 
-    const hud = new Hud(tracks.sand);
+    this.hud = new Hud(tracks.sand);
 
-    this.objects.push(track);
-    this.objects.push(hud);
-
-    this.track = track;
-    this.hud = hud;
-    this.hud.startLapTimer();
+    this.objects.push(this.track);
 
     this.objects.push(
       new PlayerCar(
         Object.assign({}, cars.rocket, {
-          x: track.startPositions[0].x,
-          y: track.startPositions[0].y,
-          angle: track.startAngle,
+          x: this.track.startPositions[0].x,
+          y: this.track.startPositions[0].y,
+          angle: this.track.startAngle,
         })
       )
     );
+
+    this.objects.push(this.hud);
 
     // this.objects.push(
     //   new AICar(
     //     Object.assign({}, cars.greenSport, {
     //       x: track.startPositions[1].x,
     //       y: track.startPositions[1].y,
-    //       angle: track.startAngle,
-    //       recordedPositions: track.recordedPositions[0],
-    //     })
-    //   )
-    // );
-
-    // this.objects.push(
-    //   new AICar(
-    //     Object.assign({}, cars.greenSport, {
-    //       x: track.startPositions[2].x,
-    //       y: track.startPositions[2].y,
     //       angle: track.startAngle,
     //       recordedPositions: track.recordedPositions[0],
     //     })
@@ -656,7 +813,6 @@ class Game {
   }
 
   onWaypointTriggered(waypointIndex) {
-    console.log("Game Waypoint triggered");
     this.hud.onWaypointTriggered(waypointIndex);
   }
 }
@@ -764,17 +920,20 @@ class Track {
     // });
 
     // Draw the waypoints
-    game.canvas.context.fillStyle = "rgba(0, 255, 0, 0.8)";
-    game.canvas.context.strokeStyle = "rgba(0, 255, 0, 0.8)";
+    game.canvas.context.fillStyle = "rgba(0, 255, 0, 0.5)";
+    game.canvas.context.strokeStyle = "rgba(0, 255, 0, 0.5)";
     game.canvas.context.lineWidth = 2;
+    game.canvas.context.beginPath();
     this.waypoints.forEach((waypoint) => {
-      game.canvas.context.fillRect(
+      game.canvas.context.roundRect(
         waypoint.x + game.viewport.x,
         waypoint.y + game.viewport.y,
         waypoint.width,
-        waypoint.height
+        waypoint.height,
+        10
       );
     });
+    game.canvas.context.fill();
 
     game.canvas.context.restore();
   }
@@ -797,6 +956,20 @@ module.exports = {
         width: 200,
         height: 20,
         angle: 270,
+      },
+      // {
+      //   x: 450,
+      //   y: 655,
+      //   width: 200,
+      //   height: 20,
+      //   angle: 90,
+      // },
+      {
+        x: 750,
+        y: 55,
+        width: 20,
+        height: 200,
+        angle: 0,
       },
       {
         x: 1500,
@@ -1051,25 +1224,17 @@ class Quadtree {
 
   draw(game) {
     // save state
-
-    game.canvas.context.save();
-
-    // draw all quadtree nodes
-
-    game.canvas.context.strokeStyle = "rgba(255, 0, 0, 0.8)";
-    game.canvas.context.lineWidth = 5;
-
-    this.drawNode(game, this);
-
-    // draw all objects
-
-    game.canvas.context.fillStyle = "rgba(255, 0, 0, 0.5)";
-    game.canvas.context.strokeStyle = "rgba(255, 0, 0, 0.5)";
-    game.canvas.context.lineWidth = 2;
-
-    this.drawObjects(game, this);
-
-    game.canvas.context.restore();
+    // game.canvas.context.save();
+    // // draw all quadtree nodes
+    // game.canvas.context.strokeStyle = "rgba(255, 0, 0, 0.8)";
+    // game.canvas.context.lineWidth = 5;
+    // this.drawNode(game, this);
+    // // draw all objects
+    // game.canvas.context.fillStyle = "rgba(255, 0, 0, 0.5)";
+    // game.canvas.context.strokeStyle = "rgba(255, 0, 0, 0.5)";
+    // game.canvas.context.lineWidth = 2;
+    // this.drawObjects(game, this);
+    // game.canvas.context.restore();
   }
 }
 

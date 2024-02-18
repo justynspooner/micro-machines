@@ -73,17 +73,20 @@ class Track {
     // });
 
     // Draw the waypoints
-    game.canvas.context.fillStyle = "rgba(0, 255, 0, 0.8)";
-    game.canvas.context.strokeStyle = "rgba(0, 255, 0, 0.8)";
+    game.canvas.context.fillStyle = "rgba(0, 255, 0, 0.5)";
+    game.canvas.context.strokeStyle = "rgba(0, 255, 0, 0.5)";
     game.canvas.context.lineWidth = 2;
+    game.canvas.context.beginPath();
     this.waypoints.forEach((waypoint) => {
-      game.canvas.context.fillRect(
+      game.canvas.context.roundRect(
         waypoint.x + game.viewport.x,
         waypoint.y + game.viewport.y,
         waypoint.width,
-        waypoint.height
+        waypoint.height,
+        10
       );
     });
+    game.canvas.context.fill();
 
     game.canvas.context.restore();
   }
